@@ -45,14 +45,22 @@ jobs:
         with:
           cache-provider: basic
 
-      - name: Build release APK
-        run: ./gradlew --no-daemon --stacktrace assembleRelease
+      - name: Build release and test APKs
+        run: ./gradlew --no-daemon --stacktrace assembleRelease assembleDebug
 
-      - name: Upload release APK artifact
+      - name: Upload unsigned release APK artifact
         uses: actions/upload-artifact@v7
         with:
           name: android-release-apk
           path: app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload debug-signed test APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -64,15 +72,21 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download release APK
+      - name: Download unsigned release APK
         uses: actions/download-artifact@v8
         with:
           name: android-release-apk
-          path: dist
+          path: dist/release
 
-      - name: Attach APK to the existing release
+      - name: Download debug-signed test APK
+        uses: actions/download-artifact@v8
+        with:
+          name: android-debug-apk
+          path: dist/debug
+
+      - name: Attach APKs to the existing release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
           GH_REPO: ${{ github.repository }}
-        run: gh release upload "$RELEASE_TAG" dist/app-release-unsigned.apk --clobber --repo "$GH_REPO"
+        run: gh release upload "$RELEASE_TAG" dist/debug/app-debug.apk dist/release/app-release-unsigned.apk --clobber --repo "$GH_REPO"
