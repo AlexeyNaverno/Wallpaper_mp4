@@ -1,0 +1,35 @@
+Categories:
+  - Wallpaper
+License: Apache-2.0
+AuthorName: Alexey Naverno
+AuthorWebSite: https://github.com/AlexeyNaverno
+SourceCode: https://github.com/AlexeyNaverno/Wallpaper_mp4
+IssueTracker: https://github.com/AlexeyNaverno/Wallpaper_mp4/issues
+Changelog: https://github.com/AlexeyNaverno/Wallpaper_mp4/blob/main/CHANGELOG.md
+
+AutoName: MP4 Live Wallpaper
+Summary: Loop MP4 videos as live wallpapers and provide their colors to Android
+Description: |-
+  Set an MP4 video as a live wallpaper and let Android derive a system palette from it.
+
+  The app samples five frames from the selected video, calculates primary, secondary and tertiary colors with Android WallpaperColors, and supplies them to the live-wallpaper service. It notifies the system when the selected video or palette changes.
+
+  Videos are selected using Android's document picker. The app retains access only to the chosen file, does not copy the video, and has no network permission. Playback is silent and loops while the live wallpaper is visible.
+
+  Requires Android 8.1 (API 27) or newer and a video format supported by the device's Android MediaPlayer. Dynamic-color behavior depends on the Android ROM and SystemUI.
+
+RepoType: git
+Repo: https://github.com/AlexeyNaverno/Wallpaper_mp4
+
+Builds:
+  - versionName: 0.0.1
+    versionCode: 1
+    commit: v0.0.1
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.0.1
+CurrentVersionCode: 1
