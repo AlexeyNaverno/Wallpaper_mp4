@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">MP4 обои</string>
     <string name="app_title">Живые обои из MP4</string>
-    <string name="app_subtitle">Небольшое приложение без сети. Видео остаётся на устройстве.</string>
+    <string name="app_subtitle">Беззвучные MP4-обои с воспроизведением вперёд и назад. Видео остаётся на устройстве.</string>
     <string name="selected_video_label">ТЕКУЩЕЕ ВИДЕО</string>
     <string name="no_video_selected">Видео не выбрано</string>
     <string name="selected_video_name">%1$s</string>
@@ -24,5 +24,5 @@
     <string name="clear_confirm_message">Обои перестанут использовать выбранное видео и вычисленные для него цвета.</string>
     <string name="cancel">Отмена</string>
     <string name="remove">Убрать</string>
-    <string name="wallpaper_description">Циклически воспроизводит выбранное MP4-видео и передаёт его палитру системе Android.</string>
+    <string name="wallpaper_description">Воспроизводит выбранное MP4-видео вперёд и назад без шва и передаёт его палитру системе Android.</string>
 </resources>

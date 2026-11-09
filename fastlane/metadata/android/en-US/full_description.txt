@@ -1,7 +1,7 @@
-Set an MP4 video as a looping, silent live wallpaper and let Android derive a system palette from it.
+Set an MP4 video as a silent live wallpaper. It plays forward and then backward, excluding the first and last endpoint frames on the reverse pass, so the loop does not jump from the end back to the start.
 
-The app samples five frames from the selected video, calculates primary, secondary and tertiary colors with Android WallpaperColors, and supplies them to the live-wallpaper service. When the selection changes, the service notifies Android so it can request the updated colors.
+Android's MediaPlayer handles the forward pass. During the reverse pass, the app asks MediaMetadataRetriever for scaled frames one at a time and draws them to the wallpaper surface; it does not keep the whole video in memory. Reverse rendering is limited to 30 frame lookups per second and a maximum 1080-pixel long edge. If the device cannot retrieve frames for a particular video, playback falls back to a normal forward loop.
 
-Videos are selected through Android's system document picker. The app keeps access only to the selected file, does not copy it into app storage, and has no network permission. Playback goes directly to the wallpaper surface; the app does not cache the complete video in memory.
+The app also samples five video frames, calculates primary, secondary and tertiary colors with Android WallpaperColors, and supplies them through the live-wallpaper service. The service notifies Android when the selected video or palette changes.
 
-Requires Android 8.1 (API 27) or later and MP4 codecs supported by the device. Applying dynamic colors depends on the ROM and SystemUI.
+Videos are selected through Android's system document picker. The app keeps access only to the selected file, does not copy it into app storage, and has no network permission. Requires Android 8.1 (API 27) or later. Dynamic-color behavior depends on the ROM and SystemUI.

@@ -8,15 +8,15 @@ IssueTracker: https://github.com/AlexeyNaverno/Wallpaper_mp4/issues
 Changelog: https://github.com/AlexeyNaverno/Wallpaper_mp4/blob/main/CHANGELOG.md
 
 AutoName: MP4 Live Wallpaper
-Summary: Loop MP4 videos as live wallpapers and provide their colors to Android
+Summary: Silent MP4 ping-pong live wallpapers with video-derived Android colors
 Description: |-
-  Set an MP4 video as a live wallpaper and let Android derive a system palette from it.
+  Set an MP4 video as a silent live wallpaper. It plays forward and then backward, excluding the endpoint frames on the reverse pass to avoid a jump from the end back to the beginning.
 
-  The app samples five frames from the selected video, calculates primary, secondary and tertiary colors with Android WallpaperColors, and supplies them to the live-wallpaper service. It notifies the system when the selected video or palette changes.
+  Android MediaPlayer handles forward playback. During the reverse pass, the app retrieves scaled frames one at a time using MediaMetadataRetriever and draws them to the wallpaper surface. Reverse rendering is limited to 30 frame lookups per second and a 1080-pixel long edge. If the device cannot retrieve frames for a video, playback falls back to a normal forward loop.
 
-  Videos are selected using Android's document picker. The app retains access only to the chosen file, does not copy the video, and has no network permission. Playback is silent and loops while the live wallpaper is visible.
+  The app samples five video frames and calculates primary, secondary and tertiary colors with Android WallpaperColors. The live-wallpaper service returns these colors to the system and calls notifyColorsChanged() when the selection changes.
 
-  Requires Android 8.1 (API 27) or newer and a video format supported by the device's Android MediaPlayer. Dynamic-color behavior depends on the Android ROM and SystemUI.
+  Videos are selected using Android's document picker. The app retains access only to the chosen file, does not copy the video and has no network permission. Requires Android 8.1 (API 27) or newer. Dynamic-color behavior depends on the Android ROM and SystemUI.
 
 RepoType: git
 Repo: https://github.com/AlexeyNaverno/Wallpaper_mp4
@@ -29,7 +29,14 @@ Builds:
     gradle:
       - yes
 
+  - versionName: 0.0.2
+    versionCode: 2
+    commit: v0.0.2
+    subdir: app
+    gradle:
+      - yes
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 0.0.1
-CurrentVersionCode: 1
+CurrentVersion: 0.0.2
+CurrentVersionCode: 2

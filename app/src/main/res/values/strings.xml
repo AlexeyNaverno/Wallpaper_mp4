@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">MP4 Live Wallpaper</string>
     <string name="app_title">MP4 live wallpaper</string>
-    <string name="app_subtitle">A small, offline video wallpaper app. Your video stays on your device.</string>
+    <string name="app_subtitle">Silent MP4 live wallpapers that play forward and backward. Your video stays on your device.</string>
     <string name="selected_video_label">CURRENT VIDEO</string>
     <string name="no_video_selected">No video selected</string>
     <string name="selected_video_name">%1$s</string>
@@ -24,5 +24,5 @@
     <string name="clear_confirm_message">The wallpaper will stop using the selected video and its calculated colors.</string>
     <string name="cancel">Cancel</string>
     <string name="remove">Remove</string>
-    <string name="wallpaper_description">Loop a selected MP4 video as a live wallpaper and share its sampled colors with Android.</string>
+    <string name="wallpaper_description">Play a selected MP4 forward and backward as a live wallpaper, and share its sampled colors with Android.</string>
 </resources>

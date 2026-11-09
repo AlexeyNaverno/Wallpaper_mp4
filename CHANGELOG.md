@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.2 — pre-release
+
+- Add default ping-pong playback: play the MP4 forward, then render reverse frames without repeating the first or last endpoint.
+- Decode reverse frames asynchronously, one at a time, with a 1080-pixel maximum long edge and a 30 fps lookup cap.
+- Resume forward playback after the reverse pass; fall back to a forward loop if reverse frame retrieval is unsupported for a selected file.
+- Update Russian/English descriptions, release link, and F-Droid metadata to version 0.0.2.
+
 ## 0.0.1 — pre-release
 
 - Initial Android live-wallpaper app for selecting and looping MP4 files.
