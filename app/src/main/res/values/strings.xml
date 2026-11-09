@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MP4 Live Wallpaper</string>
+    <string name="app_title">MP4 live wallpaper</string>
+    <string name="app_subtitle">A small, offline video wallpaper app. Your video stays on your device.</string>
+    <string name="selected_video_label">CURRENT VIDEO</string>
+    <string name="no_video_selected">No video selected</string>
+    <string name="selected_video_name">%1$s</string>
+    <string name="video_file_hint">Choose an MP4 file from your device. The app keeps access to this file using Android’s document picker.</string>
+    <string name="palette_title">Wallpaper color palette</string>
+    <string name="palette_not_available">Choose a video to calculate its colors.</string>
+    <string name="palette_hint">The sampled colors are provided to Android as wallpaper colors. The system decides how and when to apply them to its theme.</string>
+    <string name="choose_video">Choose MP4 video</string>
+    <string name="apply_wallpaper">Preview and set wallpaper</string>
+    <string name="clear_video">Remove selected video</string>
+    <string name="analyzing_video">Reading a few frames to calculate the wallpaper colors…</string>
+    <string name="video_ready">Video selected. Preview it and choose where to set the wallpaper.</string>
+    <string name="video_error">Could not read this video. Choose a supported MP4 file and try again.</string>
+    <string name="save_error">Could not save the video selection. Please try again.</string>
+    <string name="permission_error">Android did not grant lasting access to this file. Please choose it again from the system file picker.</string>
+    <string name="picker_unavailable">No compatible system file picker was found.</string>
+    <string name="select_video_first">Choose an MP4 video first.</string>
+    <string name="clear_confirm_title">Remove this video?</string>
+    <string name="clear_confirm_message">The wallpaper will stop using the selected video and its calculated colors.</string>
+    <string name="cancel">Cancel</string>
+    <string name="remove">Remove</string>
+    <string name="wallpaper_description">Loop a selected MP4 video as a live wallpaper and share its sampled colors with Android.</string>
+</resources>

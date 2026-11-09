@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MP4 обои</string>
+    <string name="app_title">Живые обои из MP4</string>
+    <string name="app_subtitle">Небольшое приложение без сети. Видео остаётся на устройстве.</string>
+    <string name="selected_video_label">ТЕКУЩЕЕ ВИДЕО</string>
+    <string name="no_video_selected">Видео не выбрано</string>
+    <string name="selected_video_name">%1$s</string>
+    <string name="video_file_hint">Выберите MP4 на устройстве. Доступ к файлу сохраняется через системный выбор документов Android.</string>
+    <string name="palette_title">Палитра обоев</string>
+    <string name="palette_not_available">Выберите видео, чтобы вычислить его цвета.</string>
+    <string name="palette_hint">Выбранные кадры передаются Android как цвета обоев. Система сама решает, как и когда применять их к своей теме.</string>
+    <string name="choose_video">Выбрать MP4</string>
+    <string name="apply_wallpaper">Предпросмотр и установка</string>
+    <string name="clear_video">Убрать выбранное видео</string>
+    <string name="analyzing_video">Читаем несколько кадров и вычисляем палитру…</string>
+    <string name="video_ready">Видео выбрано. Откройте предпросмотр и выберите, куда установить обои.</string>
+    <string name="video_error">Не удалось прочитать это видео. Выберите поддерживаемый MP4-файл и попробуйте ещё раз.</string>
+    <string name="save_error">Не удалось сохранить выбор видео. Попробуйте ещё раз.</string>
+    <string name="permission_error">Android не предоставил постоянный доступ к файлу. Выберите его ещё раз в системном файловом окне.</string>
+    <string name="picker_unavailable">Не найден системный файловый менеджер для выбора видео.</string>
+    <string name="select_video_first">Сначала выберите MP4-видео.</string>
+    <string name="clear_confirm_title">Убрать это видео?</string>
+    <string name="clear_confirm_message">Обои перестанут использовать выбранное видео и вычисленные для него цвета.</string>
+    <string name="cancel">Отмена</string>
+    <string name="remove">Убрать</string>
+    <string name="wallpaper_description">Циклически воспроизводит выбранное MP4-видео и передаёт его палитру системе Android.</string>
+</resources>
