@@ -11,6 +11,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing GitHub Release tag to attach the APK to
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -53,7 +58,7 @@ jobs:
 
   attach-release-apk:
     name: Attach APK to GitHub Release
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -68,4 +73,6 @@ jobs:
       - name: Attach APK to the existing release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${GITHUB_REF_NAME}" dist/app-release-unsigned.apk --clobber
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$RELEASE_TAG" dist/app-release-unsigned.apk --clobber --repo "$GH_REPO"
