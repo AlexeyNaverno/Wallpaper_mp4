@@ -16,6 +16,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Decodes and draws the interior video frames in reverse order, one frame at a time. */
@@ -132,10 +133,10 @@ final class ReverseFramePlayer {
             retriever = candidate;
             ready = true;
             scheduleCurrentFrame();
-        } catch (RuntimeException exception) {
+        } catch (IOException | RuntimeException exception) {
             try {
                 candidate.release();
-            } catch (RuntimeException ignored) {
+            } catch (IOException | RuntimeException ignored) {
                 // Preserve the decoding error for the listener.
             }
             fail(exception);
@@ -306,7 +307,7 @@ final class ReverseFramePlayer {
         if (current != null) {
             try {
                 current.release();
-            } catch (RuntimeException ignored) {
+            } catch (IOException | RuntimeException ignored) {
                 // Nothing remains to release if the platform decoder has already stopped.
             }
         }
