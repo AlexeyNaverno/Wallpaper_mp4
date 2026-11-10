@@ -14,7 +14,7 @@ import android.view.SurfaceHolder;
 
 import java.io.IOException;
 
-/** Plays the selected MP4 as a silent forward/reverse live wallpaper. */
+/** Plays a previously generated, silent ping-pong MP4 as a live wallpaper. */
 public final class VideoWallpaperService extends WallpaperService {
     static final String ACTION_VIDEO_OR_PALETTE_CHANGED =
             "io.github.alexeynaverno.wallpapermp4.action.VIDEO_OR_PALETTE_CHANGED";
@@ -32,11 +32,8 @@ public final class VideoWallpaperService extends WallpaperService {
                 if (!ACTION_VIDEO_OR_PALETTE_CHANGED.equals(intent.getAction())) {
                     return;
                 }
-                // The system asks onComputeColors() for the new values after this notification.
                 notifyColorsChanged();
-                stopReversePlayback();
                 releasePlayer();
-                waitingForForwardRestart = false;
                 if (surfaceReady && wallpaperVisible) {
                     startPlayer();
                 }
@@ -45,13 +42,10 @@ public final class VideoWallpaperService extends WallpaperService {
 
         private SurfaceHolder surfaceHolder;
         private MediaPlayer mediaPlayer;
-        private ReverseFramePlayer reversePlayback;
         private boolean surfaceReady;
         private boolean wallpaperVisible;
         private boolean playerPrepared;
         private boolean receiverRegistered;
-        private boolean waitingForForwardRestart;
-        private boolean reversePhase;
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -67,15 +61,11 @@ public final class VideoWallpaperService extends WallpaperService {
                 VideoWallpaperService.this.registerReceiver(updateReceiver, filter);
             }
             receiverRegistered = true;
-
-            // Also refresh at initial activation; a palette may have been saved before this engine
-            // was created by the system wallpaper preview.
             notifyColorsChanged();
         }
 
         @Override
         public WallpaperColors onComputeColors() {
-            // This is the public live-wallpaper color API consumed by SystemUI / Monet.
             return WallpaperPaletteStore.getWallpaperColors(VideoWallpaperService.this);
         }
 
@@ -94,6 +84,17 @@ public final class VideoWallpaperService extends WallpaperService {
         public void onSurfaceChanged(SurfaceHolder holder, int format, int width, int height) {
             super.onSurfaceChanged(holder, format, width, height);
             surfaceHolder = holder;
+            if (mediaPlayer != null && playerPrepared && holder.getSurface().isValid()) {
+                try {
+                    mediaPlayer.setSurface(holder.getSurface());
+                } catch (RuntimeException exception) {
+                    Log.w(TAG, "Could not update the wallpaper video surface.", exception);
+                    releasePlayer();
+                    if (wallpaperVisible) {
+                        startPlayer();
+                    }
+                }
+            }
         }
 
         @Override
@@ -101,8 +102,6 @@ public final class VideoWallpaperService extends WallpaperService {
             super.onSurfaceDestroyed(holder);
             surfaceReady = false;
             surfaceHolder = null;
-            waitingForForwardRestart = false;
-            stopReversePlayback();
             releasePlayer();
         }
 
@@ -110,21 +109,10 @@ public final class VideoWallpaperService extends WallpaperService {
         public void onVisibilityChanged(boolean visible) {
             super.onVisibilityChanged(visible);
             wallpaperVisible = visible;
-            if (reversePlayback != null) {
-                reversePlayback.setVisible(visible);
-            }
-
             if (!visible) {
                 pausePlayer();
             } else if (surfaceReady) {
-                if (reversePhase) {
-                    // It may be decoding, or its completion callback may be queued on the main
-                    // thread. Let that callback reattach the surface before forward playback.
-                    return;
-                }
-                if (waitingForForwardRestart) {
-                    continueForwardAfterReverse();
-                } else if (mediaPlayer == null) {
+                if (mediaPlayer == null) {
                     startPlayer();
                 } else {
                     resumePlayer();
@@ -135,7 +123,6 @@ public final class VideoWallpaperService extends WallpaperService {
         @Override
         public void onDestroy() {
             wallpaperVisible = false;
-            stopReversePlayback();
             releasePlayer();
             if (receiverRegistered) {
                 try {
@@ -150,8 +137,9 @@ public final class VideoWallpaperService extends WallpaperService {
         }
 
         private void startPlayer() {
-            if (!surfaceReady || !wallpaperVisible || surfaceHolder == null
-                    || !surfaceHolder.getSurface().isValid() || mediaPlayer != null) {
+            SurfaceHolder holder = surfaceHolder;
+            if (!surfaceReady || !wallpaperVisible || holder == null
+                    || !holder.getSurface().isValid() || mediaPlayer != null) {
                 return;
             }
 
@@ -160,7 +148,6 @@ public final class VideoWallpaperService extends WallpaperService {
                 return;
             }
 
-            waitingForForwardRestart = false;
             MediaPlayer player = new MediaPlayer();
             mediaPlayer = player;
             playerPrepared = false;
@@ -170,7 +157,6 @@ public final class VideoWallpaperService extends WallpaperService {
                     return;
                 }
                 playerPrepared = true;
-                createReversePlayback(videoUri, preparedPlayer);
                 if (wallpaperVisible) {
                     try {
                         preparedPlayer.start();
@@ -180,15 +166,9 @@ public final class VideoWallpaperService extends WallpaperService {
                     }
                 }
             });
-            player.setOnCompletionListener(completedPlayer -> {
-                if (mediaPlayer == completedPlayer) {
-                    beginReversePlayback(completedPlayer);
-                }
-            });
             player.setOnErrorListener((failedPlayer, what, extra) -> {
                 Log.w(TAG, "The device could not play the selected MP4 (" + what + ", " + extra + ").");
                 if (mediaPlayer == failedPlayer) {
-                    stopReversePlayback();
                     releasePlayer();
                 }
                 return true;
@@ -196,131 +176,23 @@ public final class VideoWallpaperService extends WallpaperService {
 
             try {
                 player.setDataSource(VideoWallpaperService.this, videoUri);
-                player.setSurface(surfaceHolder.getSurface());
-                player.setLooping(false);
+                player.setSurface(holder.getSurface());
+                player.setLooping(true);
                 player.setVolume(0f, 0f);
                 player.setVideoScalingMode(
                         MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
                 player.prepareAsync();
             } catch (IOException | RuntimeException exception) {
-                Log.w(TAG, "Could not prepare the selected wallpaper video.", exception);
-                stopReversePlayback();
+                Log.w(TAG, "Could not prepare the selected wallpaper MP4.", exception);
                 releasePlayer();
-            }
-        }
-
-        private void createReversePlayback(Uri videoUri, MediaPlayer player) {
-            stopReversePlayback();
-            reversePlayback = new ReverseFramePlayer(
-                    VideoWallpaperService.this,
-                    videoUri,
-                    surfaceHolder,
-                    player.getDuration(),
-                    new ReverseFramePlayer.Listener() {
-                        @Override
-                        public void onReverseFinished(ReverseFramePlayer finishedPlayback) {
-                            onReversePlaybackFinished(finishedPlayback);
-                        }
-
-                        @Override
-                        public void onReverseFailed(
-                                ReverseFramePlayer failedPlayback, Exception error) {
-                            Log.w(TAG, "Ping-pong playback is unavailable for this video.", error);
-                            if (reversePhase) {
-                                onReversePlaybackFinished(failedPlayback);
-                            } else if (reversePlayback == failedPlayback) {
-                                reversePlayback = null;
-                            }
-                        }
-                    });
-            reversePlayback.setVisible(wallpaperVisible);
-        }
-
-        private void beginReversePlayback(MediaPlayer completedPlayer) {
-            if (reversePlayback == null || surfaceHolder == null || !surfaceReady) {
-                restartForwardFromCompletion(completedPlayer);
-                return;
-            }
-
-            try {
-                // Detach the codec from the wallpaper surface so the reverse-frame renderer can
-                // draw to it with Canvas. It is reattached when the reverse segment is complete.
-                completedPlayer.setSurface(null);
-                reversePhase = true;
-                reversePlayback.setVisible(wallpaperVisible);
-                reversePlayback.start();
-            } catch (RuntimeException exception) {
-                Log.w(TAG, "Could not switch to reverse-frame rendering.", exception);
-                reversePhase = false;
-                stopReversePlayback();
-                restartForwardFromCompletion(completedPlayer);
-            }
-        }
-
-        private void onReversePlaybackFinished(ReverseFramePlayer finishedPlayback) {
-            if (reversePlayback != finishedPlayback) {
-                return;
-            }
-            reversePlayback = null;
-            reversePhase = false;
-            if (!wallpaperVisible || !surfaceReady) {
-                waitingForForwardRestart = true;
-                return;
-            }
-            continueForwardAfterReverse();
-        }
-
-        private void continueForwardAfterReverse() {
-            MediaPlayer player = mediaPlayer;
-            SurfaceHolder holder = surfaceHolder;
-            if (!wallpaperVisible || !surfaceReady || holder == null
-                    || !holder.getSurface().isValid()) {
-                waitingForForwardRestart = true;
-                return;
-            }
-            if (player == null || !playerPrepared) {
-                waitingForForwardRestart = false;
-                startPlayer();
-                return;
-            }
-
-            try {
-                player.setSurface(holder.getSurface());
-                waitingForForwardRestart = false;
-                // MediaPlayer restarts from the beginning when start() is called after completion.
-                player.start();
-            } catch (RuntimeException exception) {
-                Log.w(TAG, "Could not resume forward playback after the reverse segment.", exception);
-                waitingForForwardRestart = false;
-                releasePlayer();
-                startPlayer();
-            }
-        }
-
-        private void restartForwardFromCompletion(MediaPlayer completedPlayer) {
-            if (completedPlayer != mediaPlayer) {
-                return;
-            }
-            if (!wallpaperVisible || !surfaceReady) {
-                waitingForForwardRestart = true;
-                return;
-            }
-            continueForwardAfterReverse();
-        }
-
-        private void stopReversePlayback() {
-            ReverseFramePlayer current = reversePlayback;
-            reversePlayback = null;
-            reversePhase = false;
-            if (current != null) {
-                current.stop();
             }
         }
 
         private void pausePlayer() {
-            if (mediaPlayer != null && playerPrepared && mediaPlayer.isPlaying()) {
+            MediaPlayer player = mediaPlayer;
+            if (player != null && playerPrepared && player.isPlaying()) {
                 try {
-                    mediaPlayer.pause();
+                    player.pause();
                 } catch (IllegalStateException exception) {
                     Log.w(TAG, "Could not pause the wallpaper video.", exception);
                     releasePlayer();
@@ -329,9 +201,10 @@ public final class VideoWallpaperService extends WallpaperService {
         }
 
         private void resumePlayer() {
-            if (mediaPlayer != null && playerPrepared && !mediaPlayer.isPlaying()) {
+            MediaPlayer player = mediaPlayer;
+            if (player != null && playerPrepared && !player.isPlaying()) {
                 try {
-                    mediaPlayer.start();
+                    player.start();
                 } catch (IllegalStateException exception) {
                     Log.w(TAG, "Could not resume the wallpaper video.", exception);
                     releasePlayer();

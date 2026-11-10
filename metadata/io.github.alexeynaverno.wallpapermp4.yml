@@ -8,15 +8,15 @@ IssueTracker: https://github.com/AlexeyNaverno/Wallpaper_mp4/issues
 Changelog: https://github.com/AlexeyNaverno/Wallpaper_mp4/blob/main/CHANGELOG.md
 
 AutoName: MP4 Live Wallpaper
-Summary: Silent MP4 ping-pong live wallpapers with video-derived Android colors
+Summary: Create silent MP4 ping-pong wallpapers and save them as templates
 Description: |-
-  Set an MP4 video as a silent live wallpaper. It plays forward and then backward, excluding the endpoint frames on the reverse pass to avoid a jump from the end back to the beginning.
+  Import an MP4 and create a reusable silent live-wallpaper template. The app decodes the source frames and encodes one H.264 MP4 in the order 0…N−1, N−2…1, excluding the first and last endpoint frames on the reverse pass.
 
-  Android MediaPlayer handles forward playback. During the reverse pass, the app retrieves scaled frames one at a time using MediaMetadataRetriever and draws them to the wallpaper surface. Reverse rendering is limited to 30 frame lookups per second and a 1080-pixel long edge. If the device cannot retrieve frames for a video, playback falls back to a normal forward loop.
+  Generated videos keep the source resolution, contain no audio and are stored in an in-app private library. The live-wallpaper service plays the prepared MP4 with Android MediaPlayer looping, so it does not decode frames in reverse while the wallpaper is visible. Template creation takes time and temporary storage; the result is about twice the source duration. Users can select or delete saved templates.
 
-  The app samples five video frames and calculates primary, secondary and tertiary colors with Android WallpaperColors. The live-wallpaper service returns these colors to the system and calls notifyColorsChanged() when the selection changes.
+  The app samples five frames from each source video and calculates primary, secondary and tertiary colors with Android WallpaperColors. The live-wallpaper service returns the palette to the system and calls notifyColorsChanged() when the selection changes.
 
-  Videos are selected using Android's document picker. The app retains access only to the chosen file, does not copy the video and has no network permission. Requires Android 8.1 (API 27) or newer. Dynamic-color behavior depends on the Android ROM and SystemUI.
+  Videos are selected using Android's document picker. Read access is released after processing. Generated files stay in the app's private storage. The app has no network permission. Requires Android 8.1 (API 27) or newer and platform support for decoding the source video and encoding H.264. Dynamic-color behavior depends on the Android ROM and SystemUI.
 
 RepoType: git
 Repo: https://github.com/AlexeyNaverno/Wallpaper_mp4
@@ -36,7 +36,14 @@ Builds:
     gradle:
       - yes
 
+  - versionName: 0.0.3
+    versionCode: 3
+    commit: v0.0.3
+    subdir: app
+    gradle:
+      - yes
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 0.0.2
-CurrentVersionCode: 2
+CurrentVersion: 0.0.3
+CurrentVersionCode: 3

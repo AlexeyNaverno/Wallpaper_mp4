@@ -1,7 +1,9 @@
-Set an MP4 video as a silent live wallpaper. It plays forward and then backward, excluding the first and last endpoint frames on the reverse pass, so the loop does not jump from the end back to the start.
+Create a reusable live-wallpaper template from an MP4. The app prepares a silent video that plays forward and then backward, and saves it in a library so you can select, apply or delete it later.
 
-Android's MediaPlayer handles the forward pass. During the reverse pass, the app asks MediaMetadataRetriever for scaled frames one at a time and draws them to the wallpaper surface; it does not keep the whole video in memory. Reverse rendering is limited to 30 frame lookups per second and a maximum 1080-pixel long edge. If the device cannot retrieve frames for a particular video, playback falls back to a normal forward loop.
+Template creation decodes the source frames and encodes them into one H.264 MP4 in the order 0…N−1, N−2…1. The reverse pass does not repeat the first or last endpoint. The wallpaper service then plays this prepared file with Android MediaPlayer looping; it does not decode frames in reverse while the wallpaper is visible.
 
-The app also samples five video frames, calculates primary, secondary and tertiary colors with Android WallpaperColors, and supplies them through the live-wallpaper service. The service notifies Android when the selected video or palette changes.
+The generated video keeps the source resolution and has no audio. Processing takes time and needs temporary storage; the result is about twice the source duration and requires additional space. The original file is not modified. Generated videos stay in the app's private storage and can be removed from the template library.
 
-Videos are selected through Android's system document picker. The app keeps access only to the selected file, does not copy it into app storage, and has no network permission. Requires Android 8.1 (API 27) or later. Dynamic-color behavior depends on the ROM and SystemUI.
+The app samples five frames from the source, calculates primary, secondary and tertiary colors with Android WallpaperColors, and returns the palette through the live-wallpaper service. Android decides whether and how to apply those colors to its system theme.
+
+Choose MP4 files using Android's document picker. The app retains read access only while processing and does not upload videos or colors. No network permission is used. Requires Android 8.1 (API 27) or later and a device capable of decoding the selected video and encoding H.264 through Android MediaCodec. Results can vary by device and codec.

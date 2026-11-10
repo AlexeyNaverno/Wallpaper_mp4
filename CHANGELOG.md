@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.3 — pre-release
+
+- Replace on-the-fly reverse rendering with a separate template-generation step that writes a silent H.264 MP4 in frame order `0…N−1, N−2…1`.
+- Keep generated wallpaper videos at the source resolution and store them privately in an in-app library.
+- Add template selection, deletion, progress reporting, and cancellation; the live wallpaper now plays the prepared file with MediaPlayer looping.
+- Save and report a separate Android wallpaper palette for each template.
+- Release the persisted SAF permission after processing; the original video is not modified or retained by the app.
+
 ## 0.0.2 — pre-release
 
 - Add default ping-pong playback: play the MP4 forward, then render reverse frames without repeating the first or last endpoint.
