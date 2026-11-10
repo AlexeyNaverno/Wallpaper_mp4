@@ -14,7 +14,7 @@ import android.view.SurfaceHolder;
 
 import java.io.IOException;
 
-/** Plays the selected MP4 on Android's live-wallpaper surface. */
+/** Plays a previously generated, silent ping-pong MP4 as a live wallpaper. */
 public final class VideoWallpaperService extends WallpaperService {
     static final String ACTION_VIDEO_OR_PALETTE_CHANGED =
             "io.github.alexeynaverno.wallpapermp4.action.VIDEO_OR_PALETTE_CHANGED";
@@ -32,13 +32,10 @@ public final class VideoWallpaperService extends WallpaperService {
                 if (!ACTION_VIDEO_OR_PALETTE_CHANGED.equals(intent.getAction())) {
                     return;
                 }
-                // The system asks onComputeColors() for the new values after this notification.
                 notifyColorsChanged();
-                if (surfaceReady && isVisible()) {
-                    releasePlayer();
+                releasePlayer();
+                if (surfaceReady && wallpaperVisible) {
                     startPlayer();
-                } else if (WallpaperPaletteStore.getVideoUri(VideoWallpaperService.this) == null) {
-                    releasePlayer();
                 }
             }
         };
@@ -46,6 +43,7 @@ public final class VideoWallpaperService extends WallpaperService {
         private SurfaceHolder surfaceHolder;
         private MediaPlayer mediaPlayer;
         private boolean surfaceReady;
+        private boolean wallpaperVisible;
         private boolean playerPrepared;
         private boolean receiverRegistered;
 
@@ -53,6 +51,7 @@ public final class VideoWallpaperService extends WallpaperService {
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
             surfaceHolder = holder;
+            wallpaperVisible = isVisible();
 
             IntentFilter filter = new IntentFilter(ACTION_VIDEO_OR_PALETTE_CHANGED);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -62,15 +61,11 @@ public final class VideoWallpaperService extends WallpaperService {
                 VideoWallpaperService.this.registerReceiver(updateReceiver, filter);
             }
             receiverRegistered = true;
-
-            // Also refresh at initial activation; a palette may have been saved before this engine
-            // was created by the system wallpaper preview.
             notifyColorsChanged();
         }
 
         @Override
         public WallpaperColors onComputeColors() {
-            // This is the public live-wallpaper color API consumed by SystemUI / Monet.
             return WallpaperPaletteStore.getWallpaperColors(VideoWallpaperService.this);
         }
 
@@ -79,7 +74,8 @@ public final class VideoWallpaperService extends WallpaperService {
             super.onSurfaceCreated(holder);
             surfaceHolder = holder;
             surfaceReady = true;
-            if (isVisible()) {
+            wallpaperVisible = isVisible();
+            if (wallpaperVisible) {
                 startPlayer();
             }
         }
@@ -88,6 +84,17 @@ public final class VideoWallpaperService extends WallpaperService {
         public void onSurfaceChanged(SurfaceHolder holder, int format, int width, int height) {
             super.onSurfaceChanged(holder, format, width, height);
             surfaceHolder = holder;
+            if (mediaPlayer != null && playerPrepared && holder.getSurface().isValid()) {
+                try {
+                    mediaPlayer.setSurface(holder.getSurface());
+                } catch (RuntimeException exception) {
+                    Log.w(TAG, "Could not update the wallpaper video surface.", exception);
+                    releasePlayer();
+                    if (wallpaperVisible) {
+                        startPlayer();
+                    }
+                }
+            }
         }
 
         @Override
@@ -101,6 +108,7 @@ public final class VideoWallpaperService extends WallpaperService {
         @Override
         public void onVisibilityChanged(boolean visible) {
             super.onVisibilityChanged(visible);
+            wallpaperVisible = visible;
             if (!visible) {
                 pausePlayer();
             } else if (surfaceReady) {
@@ -114,6 +122,7 @@ public final class VideoWallpaperService extends WallpaperService {
 
         @Override
         public void onDestroy() {
+            wallpaperVisible = false;
             releasePlayer();
             if (receiverRegistered) {
                 try {
@@ -128,8 +137,9 @@ public final class VideoWallpaperService extends WallpaperService {
         }
 
         private void startPlayer() {
-            if (!surfaceReady || !isVisible() || surfaceHolder == null
-                    || !surfaceHolder.getSurface().isValid() || mediaPlayer != null) {
+            SurfaceHolder holder = surfaceHolder;
+            if (!surfaceReady || !wallpaperVisible || holder == null
+                    || !holder.getSurface().isValid() || mediaPlayer != null) {
                 return;
             }
 
@@ -147,7 +157,7 @@ public final class VideoWallpaperService extends WallpaperService {
                     return;
                 }
                 playerPrepared = true;
-                if (isVisible()) {
+                if (wallpaperVisible) {
                     try {
                         preparedPlayer.start();
                     } catch (IllegalStateException exception) {
@@ -166,22 +176,23 @@ public final class VideoWallpaperService extends WallpaperService {
 
             try {
                 player.setDataSource(VideoWallpaperService.this, videoUri);
-                player.setSurface(surfaceHolder.getSurface());
+                player.setSurface(holder.getSurface());
                 player.setLooping(true);
                 player.setVolume(0f, 0f);
                 player.setVideoScalingMode(
                         MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
                 player.prepareAsync();
             } catch (IOException | RuntimeException exception) {
-                Log.w(TAG, "Could not prepare the selected wallpaper video.", exception);
+                Log.w(TAG, "Could not prepare the selected wallpaper MP4.", exception);
                 releasePlayer();
             }
         }
 
         private void pausePlayer() {
-            if (mediaPlayer != null && playerPrepared && mediaPlayer.isPlaying()) {
+            MediaPlayer player = mediaPlayer;
+            if (player != null && playerPrepared && player.isPlaying()) {
                 try {
-                    mediaPlayer.pause();
+                    player.pause();
                 } catch (IllegalStateException exception) {
                     Log.w(TAG, "Could not pause the wallpaper video.", exception);
                     releasePlayer();
@@ -190,9 +201,10 @@ public final class VideoWallpaperService extends WallpaperService {
         }
 
         private void resumePlayer() {
-            if (mediaPlayer != null && playerPrepared && !mediaPlayer.isPlaying()) {
+            MediaPlayer player = mediaPlayer;
+            if (player != null && playerPrepared && !player.isPlaying()) {
                 try {
-                    mediaPlayer.start();
+                    player.start();
                 } catch (IllegalStateException exception) {
                     Log.w(TAG, "Could not resume the wallpaper video.", exception);
                     releasePlayer();
